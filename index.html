@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>合成大炸鸡桶 - 完整贴图触控版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f7edd6;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #score-board {
+            font-size: 24px;
+            font-weight: bold;
+            color: #8B4513;
+            margin-bottom: 15px;
+            user-select: none;
+        }
+        #game-area {
+            position: relative;
+            border: 4px solid #8B4513;
+            border-radius: 10px;
+            background: #fffef9;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            /* 阻止手机端长按弹出菜单和自带滚屏 */
+            touch-action: none; 
+        }
+        #tip {
+            margin-top: 10px;
+            color: #a0522d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="score-board">积分: <span id="score">0</span></div>
+    <div id="game-area"></div>
+    <div id="tip">💡 在屏幕上左右滑动控制方向</div>
+
+<script>
+const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
+
+const width = 360;  // 适合手机全面屏的宽度
+const height = 540;
+let score = 0;
+
+// 1. 初始化引擎
+const engine = Engine.create();
+const world = engine.world;
+const render = Render.create({
+    element: document.getElementById('game-area'),
+    engine: engine,
+    options: { 
+        width, 
+        height, 
+        wireframes: false, // 必须为 false 才能渲染图片贴图
+        background: '#fffef9' 
+    }
+});
+
+Render.run(render);
+const runner = Runner.create();
+Runner.run(runner, engine);
+
+// 2. 创建边界
+const ground = Bodies.rectangle(width/2, height + 20, width, 60, { isStatic: true, render: { fillStyle: '#8B4513' } });
+const leftWall = Bodies.rectangle(-20, height/2, 50, height, { isStatic: true });
+const rightWall = Bodies.rectangle(width + 20, height/2, 50, height, { isStatic: true });
+Composite.add(world, [ground, leftWall, rightWall]);
+
+// 3. 🎯 素材配置（已全面启用 asset 贴图）
+// 💡 如果发现 wing, empty, fancy 大小不对，请用公式 (radius*2)/图片像素 替换对应的 xScale 和 yScale
+const TYPES = {
+    WING: { 
+        label: 'wing', radius: 22, 
+        render: { 
+            sprite: { texture: 'assets/wing.png', xScale: 0.35, yScale: 0.35 } 
+        } 
+    },
+    SPICE: { 
+        label: 'spice', radius: 15, 
+        render: { 
+            sprite: { texture: 'assets/spice.png', xScale: 0.17, yScale: 0.154 } 
+        } 
+    },
+    EMPTY: { 
+        label: 'empty', radius: 32, 
+        render: { 
+            sprite: { texture: 'assets/empty_bucket.png', xScale: 0.31, yScale: 0.31 } 
+        } 
+    },
+    ROASTED: { 
+        label: 'roasted', radius: 26, 
+        render: { 
+            sprite: { texture: 'assets/roasted_wing.png', xScale: 0.121, yScale: 0.109 }
+        } 
+    },
+    FANCY: { 
+        label: 'fancy', radius: 42, 
+        render: { 
+            sprite: { texture: 'assets/fancy_bucket.png', xScale: 0.3, yScale: 0.3 } 
+        } 
+    }
+};
+const spawnable = [TYPES.WING, TYPES.SPICE, TYPES.EMPTY];
+
+let currentBody = null;
+let targetX = width / 2; // 玩家期望的水平位置
+const fallSpeed = 1.8;   // 自动下落的速度
+
+// 4. 生成新素材
+function spawnNext() {
+    const currentType = spawnable[Math.floor(Math.random() * spawnable.length)];
+    targetX = width / 2; // 重置目标位置到中间
+    
+    currentBody = Bodies.circle(targetX, 40, currentType.radius, {
+        label: currentType.label,
+        render: currentType.render,
+        restitution: 0.2,
+        friction: 0.1
+    });
+    
+    Composite.add(world, currentBody);
+}
+
+// 5. 让素材在玩家手中时缓慢自动下落
+Events.on(engine, 'beforeUpdate', () => {
+    if (currentBody) {
+        // 水平方向平滑跟随手指
+        let nextX = currentBody.position.x + (targetX - currentBody.position.x) * 0.2;
+        // 垂直方向匀速向下移动
+        let nextY = currentBody.position.y + fallSpeed;
+        
+        // 限制不能穿墙
+        const radius = currentBody.circleRadius;
+        nextX = Math.max(radius, Math.min(width - radius, nextX));
+
+        Body.setPosition(currentBody, { x: nextX, y: nextY });
+        Body.setVelocity(currentBody, { x: 0, y: 0 });
+    }
+});
+
+// 6. 触控与鼠标事件绑定（手机、PC通用）
+const gameArea = document.getElementById('game-area');
+
+function handleMove(clientX) {
+    const rect = gameArea.getBoundingClientRect();
+    const relativeX = clientX - rect.left;
+    targetX = relativeX;
+}
+
+// 触屏滑动
+gameArea.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 0) {
+        handleMove(e.touches[0].clientX);
+    }
+}, { passive: true });
+
+// 鼠标滑动（方便在电脑上调试）
+gameArea.addEventListener('mousemove', (e) => {
+    if (e.buttons === 1 || currentBody) { 
+        handleMove(e.clientX);
+    }
+});
+
+
+// 7. 碰撞判定：一旦触碰其他物体，释放控制权
+Events.on(engine, 'collisionStart', (event) => {
+    const pairs = event.pairs;
+    
+    pairs.forEach((pair) => {
+        const bodyA = pair.bodyA;
+        const bodyB = pair.bodyB;
+        
+        // A. 判定是否需要释放当前控制的物体
+        if (currentBody && (bodyA === currentBody || bodyB === currentBody)) {
+            const otherBody = bodyA === currentBody ? bodyB : bodyA;
+            // 碰到了墙壁不释放控制，只有碰到地面或其他食材才释放
+            if (otherBody !== leftWall && otherBody !== rightWall) {
+                currentBody = null; 
+                setTimeout(spawnNext, 800); // 0.8秒后在顶部生成下一个
+            }
+        }
+
+        // B. 正常的合成逻辑
+        const labelA = bodyA.label;
+        const labelB = bodyB.label;
+        let midX = (bodyA.position.x + bodyB.position.x) / 2;
+        let midY = (bodyA.position.y + bodyB.position.y) / 2;
+
+        // 路线 1: 鸡翅 + 香料 = 烤鸡翅
+        if ((labelA === 'wing' && labelB === 'spice') || (labelA === 'spice' && labelB === 'wing')) {
+            Composite.remove(world, [bodyA, bodyB]);
+            createSynthesizedBody(midX, midY, TYPES.ROASTED);
+        }
+        
+        // 路线 2: 烤鸡翅 + 空桶 = 豪华全家桶 -> 消除 + 加分
+        if ((labelA === 'roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'roasted')) {
+            Composite.remove(world, [bodyA, bodyB]);
+            let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
+            
+            // 豪华全家桶闪现一下后消除
+            setTimeout(() => {
+                Composite.remove(world, fancy);
+                score += 100;
+                document.getElementById('score').innerText = score;
+            }, 150);
+        }
+    });
+});
+
+function createSynthesizedBody(x, y, type) {
+    const newBody = Bodies.circle(x, y, type.radius, {
+        label: type.label,
+        render: type.render,
+        restitution: 0.3
+    });
+    Composite.add(world, newBody);
+    return newBody;
+}
+
+// 启动游戏
+spawnNext();
+</script>
+</body>
+</html>
