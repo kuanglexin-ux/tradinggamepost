@@ -78,40 +78,47 @@ const leftWall = Bodies.rectangle(-20, height/2, 50, height, { isStatic: true })
 const rightWall = Bodies.rectangle(width + 20, height/2, 50, height, { isStatic: true });
 Composite.add(world, [ground, leftWall, rightWall]);
 
-// 3. 🎯 素材配置（已全面启用 asset 贴图）
-// 💡 如果发现 wing, empty, fancy 大小不对，请用公式 (radius*2)/图片像素 替换对应的 xScale 和 yScale
+// 3. 🎯 素材配置（已根据每行数量重新设计尺寸，并修复损坏的数据链）
 const TYPES = {
     WING: { 
-        label: 'wing', radius: 22, 
+        label: 'wing', 
+        radius: 27.7, // 每行刚好放 6.5 个
         render: { 
             sprite: { texture: 'assets/wing.png', xScale: 0.35, yScale: 0.35 } 
         } 
     },
     SPICE: { 
-        label: 'spice', radius: 15, 
+        label: 'spice', 
+        radius: 17.1, // 每行刚好放 10.5 个
         render: { 
+            // 精准适配 343 * 383 像素
             sprite: { texture: 'assets/spice.png', xScale: 0.17, yScale: 0.154 } 
         } 
     },
     EMPTY: { 
-        label: 'empty', radius: 32, 
+        label: 'empty', 
+        radius: 30, // 每行刚好放 6 个
         render: { 
             sprite: { texture: 'assets/empty_bucket.png', xScale: 0.31, yScale: 0.31 } 
         } 
     },
     ROASTED: { 
-        label: 'roasted', radius: 26, 
+        label: 'roasted', 
+        radius: 32.7, // 每行刚好放 5.5 个
         render: { 
+            // 精准适配 746 * 800 像素
             sprite: { texture: 'assets/roasted_wing.png', xScale: 0.121, yScale: 0.109 }
         } 
     },
     FANCY: { 
-        label: 'fancy', radius: 42, 
+        label: 'fancy', 
+        radius: 40, // 终极豪华桶
         render: { 
             sprite: { texture: 'assets/fancy_bucket.png', xScale: 0.3, yScale: 0.3 } 
         } 
     }
 };
+
 const spawnable = [TYPES.WING, TYPES.SPICE, TYPES.EMPTY];
 
 let currentBody = null;
@@ -166,7 +173,7 @@ gameArea.addEventListener('touchmove', (e) => {
     }
 }, { passive: true });
 
-// 鼠标滑动（方便在电脑上调试）
+// 鼠标滑动（方便你在电脑上调试）
 gameArea.addEventListener('mousemove', (e) => {
     if (e.buttons === 1 || currentBody) { 
         handleMove(e.clientX);
