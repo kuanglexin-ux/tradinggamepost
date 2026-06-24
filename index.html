@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>合成大炸鸡桶 - 完整贴图触控版</title>
+    <title>合成大炸鸡桶 - 完美概率平衡版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         body {
@@ -31,7 +31,6 @@
             border-radius: 10px;
             background: #fffef9;
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            /* 阻止手机端长按弹出菜单和自带滚屏 */
             touch-action: none; 
         }
         #tip {
@@ -50,7 +49,7 @@
 <script>
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
-const width = 360;  // 适合手机全面屏的宽度
+const width = 360;  
 const height = 540;
 let score = 0;
 
@@ -63,7 +62,7 @@ const render = Render.create({
     options: { 
         width, 
         height, 
-        wireframes: false, // 必须为 false 才能渲染图片贴图
+        wireframes: false, 
         background: '#fffef9' 
     }
 });
@@ -78,58 +77,71 @@ const leftWall = Bodies.rectangle(-20, height/2, 50, height, { isStatic: true })
 const rightWall = Bodies.rectangle(width + 20, height/2, 50, height, { isStatic: true });
 Composite.add(world, [ground, leftWall, rightWall]);
 
-// 3. 🎯 素材配置（已根据每行数量重新设计尺寸，并修复损坏的数据链）
+// 3. 素材基本属性配置（已完整保留你微调后的所有图片缩放参数）
 const TYPES = {
     WING: { 
-        label: 'wing', 
-        radius: 27.7, // 每行刚好放 6.5 个
-        render: { 
-            sprite: { texture: 'assets/wing.png', xScale: 0.35, yScale: 0.35 } 
-        } 
+        label: 'wing', radius: 27.7, 
+        render: { fillStyle: '#f39c12', sprite: { texture: 'assets/wing.png', xScale: 0.38, yScale: 0.38 } } 
     },
     SPICE: { 
-        label: 'spice', 
-        radius: 17.1, // 每行刚好放 8.5 个
-        render: { 
-            // 精准适配 343 * 383 像素
-            sprite: { texture: 'assets/spice.png', xScale: 0.17, yScale: 0.154 } 
-        } 
-    },
-    EMPTY: { 
-        label: 'empty', 
-        radius: 30, // 每行刚好放 5 个
-        render: { 
-            sprite: { texture: 'assets/empty_bucket.png', xScale: 0.31, yScale: 0.31 } 
-        } 
+        label: 'spice', radius: 17.1, 
+        render: { fillStyle: '#e74c3c', sprite: { texture: 'assets/spice.png', xScale: 0.2, yScale: 0.181 } } 
     },
     ROASTED: { 
-        label: 'roasted', 
-        radius: 32.7, // 每行刚好放 4.5 个
-        render: { 
-            // 精准适配 746 * 800 像素
-            sprite: { texture: 'assets/roasted_wing.png', xScale: 0.121, yScale: 0.109 }
-        } 
+        label: 'roasted', radius: 32.7, 
+        render: { fillStyle: '#d35400', sprite: { texture: 'assets/roasted_wing.png', xScale: 0.122, yScale: 0.109 } } 
+    },
+    YELLOW_WING: {
+        label: 'yellow_wing', radius: 27.7, 
+        render: { fillStyle: '#f1c40f', sprite: { texture: 'assets/yellow_wing.png', xScale: 0.18, yScale: 0.18 } }
+    },
+    RED_SPICE: {
+        label: 'red_spice', radius: 17.1, 
+        render: { fillStyle: '#c0392b', sprite: { texture: 'assets/red_spice.png', xScale: 0.135, yScale: 0.121 } }
+    },
+    RED_ROASTED: {
+        label: 'red_roasted', radius: 32.7, 
+        render: { fillStyle: '#962d22', sprite: { texture: 'assets/red_roasted_wing.png', xScale: 0.42, yScale: 0.38 } }
+    },
+    EMPTY: { 
+        label: 'empty', radius: 30, 
+        render: { fillStyle: '#95a5a6', sprite: { texture: 'assets/empty_bucket.png', xScale: 0.35, yScale: 0.35 } } 
     },
     FANCY: { 
-        label: 'fancy', 
-        radius: 40, // 终极豪华桶
-        render: { 
-            sprite: { texture: 'assets/fancy_bucket.png', xScale: 0.3, yScale: 0.3 } 
-        } 
+        label: 'fancy', radius: 40, 
+        render: { fillStyle: '#2ecc71', sprite: { texture: 'assets/fancy_bucket.png', xScale: 0.3, yScale: 0.3 } } 
     }
 };
 
-const spawnable = [TYPES.WING, TYPES.SPICE, TYPES.EMPTY];
+// 🎯 核心改动：已根据最新需求重新分配权重（总权重 100）
+// EMPTY 进一步降低至 12.75%，SPICE 降低至 17.00%，其余三种素材平分剩余概率（各约 23.42%）
+const spawnablePool = [
+    { type: TYPES.WING,        weight: 23.416 },
+    { type: TYPES.YELLOW_WING, weight: 23.416 },
+    { type: TYPES.RED_SPICE,   weight: 23.416 },
+    { type: TYPES.SPICE,       weight: 17.000 }, // 🎯 已降低 20%
+    { type: TYPES.EMPTY,       weight: 12.750 }  // 🎯 已再降低 15%
+];
 
 let currentBody = null;
-let targetX = width / 2; // 玩家期望的水平位置
-const fallSpeed = 1.8;   // 自动下落的速度
+let targetX = width / 2; 
+const fallSpeed = 4.6;   // 保持你调整后的高流速
 
-// 4. 生成新素材
+// 4. 生成新素材（基于新权重区间）
 function spawnNext() {
-    const currentType = spawnable[Math.floor(Math.random() * spawnable.length)];
-    targetX = width / 2; // 重置目标位置到中间
+    let randomNum = Math.random() * 100;
+    let currentType = spawnablePool[0].type; 
     
+    let sum = 0;
+    for (let i = 0; i < spawnablePool.length; i++) {
+        sum += spawnablePool[i].weight;
+        if (randomNum <= sum) {
+            currentType = spawnablePool[i].type;
+            break;
+        }
+    }
+
+    targetX = width / 2; 
     currentBody = Bodies.circle(targetX, 40, currentType.radius, {
         label: currentType.label,
         render: currentType.render,
@@ -143,12 +155,9 @@ function spawnNext() {
 // 5. 让素材在玩家手中时缓慢自动下落
 Events.on(engine, 'beforeUpdate', () => {
     if (currentBody) {
-        // 水平方向平滑跟随手指
         let nextX = currentBody.position.x + (targetX - currentBody.position.x) * 0.2;
-        // 垂直方向匀速向下移动
         let nextY = currentBody.position.y + fallSpeed;
         
-        // 限制不能穿墙
         const radius = currentBody.circleRadius;
         nextX = Math.max(radius, Math.min(width - radius, nextX));
 
@@ -157,7 +166,7 @@ Events.on(engine, 'beforeUpdate', () => {
     }
 });
 
-// 6. 触控与鼠标事件绑定（手机、PC通用）
+// 6. 触控与鼠标事件绑定
 const gameArea = document.getElementById('game-area');
 
 function handleMove(clientX) {
@@ -166,22 +175,19 @@ function handleMove(clientX) {
     targetX = relativeX;
 }
 
-// 触屏滑动
 gameArea.addEventListener('touchmove', (e) => {
     if (e.touches.length > 0) {
         handleMove(e.touches[0].clientX);
     }
 }, { passive: true });
 
-// 鼠标滑动（方便你在电脑上调试）
 gameArea.addEventListener('mousemove', (e) => {
     if (e.buttons === 1 || currentBody) { 
         handleMove(e.clientX);
     }
 });
 
-
-// 7. 碰撞判定：一旦触碰其他物体，释放控制权
+// 7. 碰撞与合成逻辑
 Events.on(engine, 'collisionStart', (event) => {
     const pairs = event.pairs;
     
@@ -189,34 +195,46 @@ Events.on(engine, 'collisionStart', (event) => {
         const bodyA = pair.bodyA;
         const bodyB = pair.bodyB;
         
-        // A. 判定是否需要释放当前控制的物体
         if (currentBody && (bodyA === currentBody || bodyB === currentBody)) {
             const otherBody = bodyA === currentBody ? bodyB : bodyA;
-            // 碰到了墙壁不释放控制，只有碰到地面或其他食材才释放
             if (otherBody !== leftWall && otherBody !== rightWall) {
                 currentBody = null; 
-                setTimeout(spawnNext, 800); // 0.8秒后在顶部生成下一个
+                setTimeout(spawnNext, 800); 
             }
         }
 
-        // B. 正常的合成逻辑
         const labelA = bodyA.label;
         const labelB = bodyB.label;
         let midX = (bodyA.position.x + bodyB.position.x) / 2;
         let midY = (bodyA.position.y + bodyB.position.y) / 2;
 
-        // 路线 1: 鸡翅 + 香料 = 烤鸡翅
+        // 路线 1（经典线）
         if ((labelA === 'wing' && labelB === 'spice') || (labelA === 'spice' && labelB === 'wing')) {
             Composite.remove(world, [bodyA, bodyB]);
             createSynthesizedBody(midX, midY, TYPES.ROASTED);
         }
         
-        // 路线 2: 烤鸡翅 + 空桶 = 豪华全家桶 -> 消除 + 加分
+        // 路线 2 (黄红双配对线)
+        if ((labelA === 'yellow_wing' && labelB === 'red_spice') || (labelA === 'red_spice' && labelB === 'yellow_wing')) {
+            Composite.remove(world, [bodyA, bodyB]);
+            createSynthesizedBody(midX, midY, TYPES.RED_ROASTED);
+        }
+        
+        // 消除 1（经典线入桶）
         if ((labelA === 'roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'roasted')) {
             Composite.remove(world, [bodyA, bodyB]);
             let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
-            
-            // 豪华全家桶闪现一下后消除
+            setTimeout(() => {
+                Composite.remove(world, fancy);
+                score += 100;
+                document.getElementById('score').innerText = score;
+            }, 150);
+        }
+
+        // 消除 2（新路线入桶）
+        if ((labelA === 'red_roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'red_roasted')) {
+            Composite.remove(world, [bodyA, bodyB]);
+            let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
             setTimeout(() => {
                 Composite.remove(world, fancy);
                 score += 100;
@@ -236,7 +254,6 @@ function createSynthesizedBody(x, y, type) {
     return newBody;
 }
 
-// 启动游戏
 spawnNext();
 </script>
 </body>
