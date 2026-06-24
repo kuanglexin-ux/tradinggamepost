@@ -52,6 +52,8 @@ const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 const width = 360;  
 const height = 540;
 let score = 0;
+let isGameOver = false;    // 🎯 游戏结束状态开关
+let gameOverTimer = 0;     // 🎯 堆叠时间计数器（帧数）
 
 // 1. 初始化引擎
 const engine = Engine.create();
@@ -77,7 +79,7 @@ const leftWall = Bodies.rectangle(-20, height/2, 50, height, { isStatic: true })
 const rightWall = Bodies.rectangle(width + 20, height/2, 50, height, { isStatic: true });
 Composite.add(world, [ground, leftWall, rightWall]);
 
-// 3. 素材基本属性配置（已完整保留你微调后的所有图片缩放参数）
+// 3. 素材基本属性配置
 const TYPES = {
     WING: { 
         label: 'wing', radius: 27.7, 
@@ -113,22 +115,22 @@ const TYPES = {
     }
 };
 
-// 🎯 核心改动：已根据最新需求重新分配权重（总权重 100）
-// EMPTY 进一步降低至 12.75%，SPICE 降低至 17.00%，其余三种素材平分剩余概率（各约 23.42%）
 const spawnablePool = [
     { type: TYPES.WING,        weight: 23.416 },
     { type: TYPES.YELLOW_WING, weight: 23.416 },
     { type: TYPES.RED_SPICE,   weight: 23.416 },
-    { type: TYPES.SPICE,       weight: 17.000 }, // 🎯 已降低 20%
-    { type: TYPES.EMPTY,       weight: 12.750 }  // 🎯 已再降低 15%
+    { type: TYPES.SPICE,       weight: 17.000 }, 
+    { type: TYPES.EMPTY,       weight: 12.750 }  
 ];
 
 let currentBody = null;
 let targetX = width / 2; 
-const fallSpeed = 4.8;   // 保持你调整后的高流速
+const fallSpeed = 5.8;   
 
-// 4. 生成新素材（基于新权重区间）
+// 4. 生成新素材
 function spawnNext() {
+    if (isGameOver) return; // 如果游戏结束，停止生成
+
     let randomNum = Math.random() * 100;
     let currentType = spawnablePool[0].type; 
     
@@ -154,7 +156,7 @@ function spawnNext() {
 
 // 5. 让素材在玩家手中时缓慢自动下落
 Events.on(engine, 'beforeUpdate', () => {
-    if (currentBody) {
+    if (currentBody && !isGameOver) {
         let nextX = currentBody.position.x + (targetX - currentBody.position.x) * 0.2;
         let nextY = currentBody.position.y + fallSpeed;
         
@@ -166,10 +168,55 @@ Events.on(engine, 'beforeUpdate', () => {
     }
 });
 
+// 🎯 核心新加：实时扫描爆仓检测逻辑
+Events.on(engine, 'afterUpdate', () => {
+    if (isGameOver) return;
+
+    const allBodies = Composite.allBodies(world);
+    let hasBlockage = false;
+
+    allBodies.forEach(body => {
+        // 判定条件：非固定边界、不是当前控制的掉落物、且中心高度堆叠到了 y < 80 的危险区
+        if (!body.isStatic && body !== currentBody && body.position.y < 80) {
+            // 确保物体是“停稳”或由于挤压蠕动很慢的状态，防止高空弹跳误判
+            if (Math.abs(body.velocity.y) < 0.3) {
+                hasBlockage = true;
+            }
+        }
+    });
+
+    if (hasBlockage) {
+        gameOverTimer += 1; // 满足条件时，逐帧累加时间
+        // 60帧约为1秒，这里设置 120 帧（即稳稳堆积超过 2 秒钟时触发 Game Over）
+        if (gameOverTimer > 120) {
+            isGameOver = true;
+            currentBody = null;
+            alert("💥 炸鸡桶爆仓啦！游戏结束！\n您的最终得分: " + score);
+            location.reload(); // 点击弹窗确认后自动刷新重开
+        }
+    } else {
+        gameOverTimer = 0; // 一旦没有堵塞，立刻重置计数器
+    }
+});
+
+// 🎯 核心新加：在画布上动态绘制红色警戒虚线
+Events.on(render, 'afterRender', () => {
+    const context = render.context;
+    context.beginPath();
+    context.setLineDash([6, 6]); // 设置 6像素实线，6像素空白的虚线样式
+    context.moveTo(0, 80);       // 起点在左墙 y=80
+    context.lineTo(width, 80);   // 终点在右墙 y=80
+    context.strokeStyle = '#e74c3c'; // 危险红
+    context.lineWidth = 2;
+    context.stroke();
+    context.setLineDash([]);     // 恢复实线画笔，避免污染引擎自带的渲染
+});
+
 // 6. 触控与鼠标事件绑定
 const gameArea = document.getElementById('game-area');
 
 function handleMove(clientX) {
+    if (isGameOver) return;
     const rect = gameArea.getBoundingClientRect();
     const relativeX = clientX - rect.left;
     targetX = relativeX;
