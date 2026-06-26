@@ -155,7 +155,7 @@
                         ⚡ 黄金线：<span>🐤黄羽鸡</span> ➕ <span>🧂胡椒粉</span> ➔ <span>🍗烤鸡腿</span>
                     </div>
                     <div class="route-line">
-                        全家桶：<span>任意烤鸡</span> ➕ <span>品牌桶</span> ➔ <span>豪华全家桶(￥100)</span>
+                        🪣 终极包装：<span>任意烤鸡</span> ➕ <span>品牌桶</span> ➔ <span>豪华全家桶(￥100)</span>
                     </div>
                     <div style="font-size:11px; color:#7f8c8d; margin-top:5px; text-indent:0;">
                         * 提示：错序碰撞（如活鸡碰空桶）无法触发整合，将占用宝贵的仓储空间。
@@ -171,11 +171,11 @@
     <div id="tip">💡 在屏幕上左右滑动控制方向</div>
 
 <script>
-// 配置 Supabase 凭证
+// 自动保留你的真实凭证
 const SUPABASE_URL = "https://opkazeluuvmviipxbvuz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_ejvW0QE5IuQFXSTZtSRAqw_0-92CIM5";
 
-// 🎯 核心修复点1：加入 typeof window.supabase !== 'undefined' 守护判定，防止本地环境被墙或被插件拦截导致代码彻底卡死
+// 🎯 修复核心：采用最稳健的条件注入，确保 Matter.js 和基础点击事件绝不被 Supabase 的加载异常连带卡死
 let supabase = null;
 if (typeof window.supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
     try {
@@ -183,6 +183,11 @@ if (typeof window.supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY)
     } catch(e) {
         console.error("Supabase初始化失败:", e);
     }
+}
+
+// 🎯 修复核心2：对 Matter.js 本身做防漏判定
+if (typeof Matter === 'undefined') {
+    alert("❌ 核心物理引擎 Matter.js 加载失败，请检查网络是否通畅或刷新重试！");
 }
 
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
@@ -338,7 +343,6 @@ async function handleGlobalLeaderboardFlow() {
     let username = prompt("💥 仓储空间爆满，热身经营结束！\n您的最终商战收益: ￥" + score + "\n\n请输入主理人姓名/组号登记全服大富翁榜：");
     if (!username) username = "神秘店长";
 
-    // 🎯 核心修改点2：对线上云端读写添加严密的异常保护
     if (supabase) {
         try {
             await supabase.from('leaderboard').insert([{ name: username, score: score }]);
@@ -347,19 +351,18 @@ async function handleGlobalLeaderboardFlow() {
 
             let rankText = "🏆 【WYEF交易热身战】历史收益 TOP 5 排行榜 🏆\n=========================\n";
             data.forEach((row, index) => {
-                rankText += `第 ${index + 1} 名：${row.name}  ➔ ￥${row.score}\n`;
+                rankText += `第 ${index + 1}名：${row.name}  ➔ ￥${row.score}\n`;
             });
             rankText += "=========================\n💡 欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！";
             alert(rankText);
-            location.reload();
-            return;
-        } catch (err) {
-            console.error("数据库读写异常，切换为单机弹窗:", err);
-        }
-    }
 
-    // 🎯 核心修改点3：若Supabase加载失败（被墙/断网），自动流畅切换为本地无阻碍弹窗
-    alert("💥 仓储空间爆满，热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
+        } catch (err) {
+            console.error("数据库连接错误:", err);
+            alert("💥 资源未能有效整合！热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
+        }
+    } else {
+        alert("💥 经营结束！最终收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
+    }
     location.reload(); 
 }
 
