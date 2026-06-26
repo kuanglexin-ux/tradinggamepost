@@ -143,7 +143,7 @@
             <div class="intro-title"><img src="assets/wyef_logo.png" alt="WYEF Logo">集桶大富翁 · WYEF交易热身战</div>
             <div class="intro-content">
                 <p>亲爱的各位ABSer未来创业家，为了让大家提前感受资源整合交易游戏的氛围，ABS委员会推出了番外版小手游——<b>集桶大富翁 - WYEF交易热身战</b>。</p>
-                <p>各位将化言本地炸鸡连锁店店长，为了制作尽可能多的全家桶，需收集并整合各类掉落素材。大家知道，未加整合的单一素材，溢价空间有限，亦难以收获顾客的关注——无论是单一的食材，还是烹饪的调料，或是一个品牌。当被整合成为明星产品，获得市场关注后，产品在市场上的溢价空间才得以提升，扩大企业营收。作为合成产品的素材，也会因为收获更多市场关注而产生更高的市场价值。</p>
+                <p>各位将化身本地炸鸡连锁店店长，为了制作尽可能多的全家桶，需收集并整合各类掉落素材。大家知道，未加整合的单一素材，溢价空间有限，亦难以收获顾客的关注——无论是单一的食材，还是烹饪的调料，或是一个品牌。当被整合成为明星产品，获得市场关注后，产品在市场上的溢价空间才得以提升，扩大企业营收。作为合成产品的素材，也会因为收获更多市场关注而产生更高的市场价值。</p>
                 <p>就像亨氏番茄酱当年因为麦当劳薯条的热卖而获得更多市场关注，麦当劳也因为门店推出的出圈套餐而收获更高的定价权。各位店长也请在游戏中尽可能地整合出更多的炸鸡全家桶，扩张自己的收益。每整合出一个全家桶，即可提升100元收益！</p>
                 
                 <div class="route-box">
@@ -155,7 +155,7 @@
                         ⚡ 黄金线：<span>🐤黄羽鸡</span> ➕ <span>🧂胡椒粉</span> ➔ <span>🍗烤鸡腿</span>
                     </div>
                     <div class="route-line">
-                        🪣 终极包装：<span>任意烤鸡</span> ➕ <span>品牌桶</span> ➔ <span>豪华全家桶(￥100)</span>
+                        全家桶：<span>任意烤鸡</span> ➕ <span>品牌桶</span> ➔ <span>豪华全家桶(￥100)</span>
                     </div>
                     <div style="font-size:11px; color:#7f8c8d; margin-top:5px; text-indent:0;">
                         * 提示：错序碰撞（如活鸡碰空桶）无法触发整合，将占用宝贵的仓储空间。
@@ -171,12 +171,19 @@
     <div id="tip">💡 在屏幕上左右滑动控制方向</div>
 
 <script>
-// 🎯 核心修改2：配置 Supabase 凭证 (已自动为你填写好 Project URL)
+// 配置 Supabase 凭证
 const SUPABASE_URL = "https://opkazeluuvmviipxbvuz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_ejvW0QE5IuQFXSTZtSRAqw_0-92CIM5";
 
-// 初始化连接客户端
-const supabase = (SUPABASE_URL && !SUPABASE_ANON_KEY.includes("请在此处粘贴")) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+// 🎯 核心修复点1：加入 typeof window.supabase !== 'undefined' 守护判定，防止本地环境被墙或被插件拦截导致代码彻底卡死
+let supabase = null;
+if (typeof window.supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
+    try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch(e) {
+        console.error("Supabase初始化失败:", e);
+    }
+}
 
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
@@ -256,7 +263,7 @@ const spawnablePool = [
 
 let currentBody = null;
 let targetX = width / 2; 
-const fallSpeed = 3.9;   // 保持 3.9 下落速度
+const fallSpeed = 3.9;   
 
 // 4. 生成新素材
 function spawnNext() {
@@ -319,43 +326,40 @@ Events.on(engine, 'afterUpdate', () => {
         if (gameOverTimer > 120) {
             isGameOver = true;
             currentBody = null;
-            handleGlobalLeaderboardFlow(); // 🎯 替换为全服网络排行榜结算流程
+            handleGlobalLeaderboardFlow(); 
         }
     } else {
         gameOverTimer = 0; 
     }
 });
 
-// 🎯 全服联网排行榜读写核心控制流
+// 全服联网排行榜读写核心控制流
 async function handleGlobalLeaderboardFlow() {
     let username = prompt("💥 仓储空间爆满，热身经营结束！\n您的最终商战收益: ￥" + score + "\n\n请输入主理人姓名/组号登记全服大富翁榜：");
     if (!username) username = "神秘店长";
 
+    // 🎯 核心修改点2：对线上云端读写添加严密的异常保护
     if (supabase) {
         try {
-            // 1. 数据异步入库
             await supabase.from('leaderboard').insert([{ name: username, score: score }]);
-            
-            // 2. 联网拉取全服前五名
             const { data, error } = await supabase.from('leaderboard').select('name, score').order('score', { ascending: false }).limit(5);
             if (error) throw error;
 
-            // 3. 动态渲染全服排行榜
             let rankText = "🏆 【WYEF交易热身战】历史收益 TOP 5 排行榜 🏆\n=========================\n";
             data.forEach((row, index) => {
                 rankText += `第 ${index + 1} 名：${row.name}  ➔ ￥${row.score}\n`;
             });
             rankText += "=========================\n💡 欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！";
             alert(rankText);
-
+            location.reload();
+            return;
         } catch (err) {
-            console.error("数据库连接错误:", err);
-            alert("💥 资源未能有效整合！热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
+            console.error("数据库读写异常，切换为单机弹窗:", err);
         }
-    } else {
-        // 密钥未完全配置时的单机兜底弹窗
-        alert("💥 经营结束！最终收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！\n\n(提示：您尚未在代码中贴入 Anon Key 密钥，目前为单机运行模式。)");
     }
+
+    // 🎯 核心修改点3：若Supabase加载失败（被墙/断网），自动流畅切换为本地无阻碍弹窗
+    alert("💥 仓储空间爆满，热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
     location.reload(); 
 }
 
@@ -461,7 +465,7 @@ function createSynthesizedBody(x, y, type) {
     return newBody;
 }
 
-// 点击按钮开始游戏，才触发第一次物料掉落
+// 点击按钮开始游戏
 document.getElementById('start-game-btn').addEventListener('click', () => {
     document.getElementById('intro-screen').style.display = 'none'; 
     spawnNext(); 
