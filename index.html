@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>集桶大富翁 - WYEF交易热身战</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             margin: 0;
@@ -155,7 +154,7 @@
                         ⚡ 黄金线：<span>🐤黄羽鸡</span> ➕ <span>🧂胡椒粉</span> ➔ <span>🍗烤鸡腿</span>
                     </div>
                     <div class="route-line">
-                        🪣 终极包装：<span>任意烤鸡</span> ➕ <span>品牌桶</span> ➔ <span>豪华全家桶(￥100)</span>
+                        全家桶：<span>任意烤鸡</span> ➕ <span>品牌桶</span> ➔ <span>豪华全家桶(￥100)</span>
                     </div>
                     <div style="font-size:11px; color:#7f8c8d; margin-top:5px; text-indent:0;">
                         * 提示：错序碰撞（如活鸡碰空桶）无法触发整合，将占用宝贵的仓储空间。
@@ -171,25 +170,6 @@
     <div id="tip">💡 在屏幕上左右滑动控制方向</div>
 
 <script>
-// 自动保留你的真实凭证
-const SUPABASE_URL = "https://opkazeluuvmviipxbvuz.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_ejvW0QE5IuQFXSTZtSRAqw_0-92CIM5";
-
-// 🎯 修复核心：采用最稳健的条件注入，确保 Matter.js 和基础点击事件绝不被 Supabase 的加载异常连带卡死
-let supabase = null;
-if (typeof window.supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
-    try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch(e) {
-        console.error("Supabase初始化失败:", e);
-    }
-}
-
-// 🎯 修复核心2：对 Matter.js 本身做防漏判定
-if (typeof Matter === 'undefined') {
-    alert("❌ 核心物理引擎 Matter.js 加载失败，请检查网络是否通畅或刷新重试！");
-}
-
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
 const width = 360;  
@@ -258,6 +238,7 @@ const TYPES = {
     }
 };
 
+// 🎯 核心改动：已将 EMPTY 权重提升 8%，并从其余 4 种素材中均摊扣除
 const spawnablePool = [
     { type: TYPES.WING,        weight: 21.416 },
     { type: TYPES.YELLOW_WING, weight: 21.416 },
@@ -331,40 +312,13 @@ Events.on(engine, 'afterUpdate', () => {
         if (gameOverTimer > 120) {
             isGameOver = true;
             currentBody = null;
-            handleGlobalLeaderboardFlow(); 
+            alert("💥 仓储空间爆满，热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
+            location.reload(); 
         }
     } else {
         gameOverTimer = 0; 
     }
 });
-
-// 全服联网排行榜读写核心控制流
-async function handleGlobalLeaderboardFlow() {
-    let username = prompt("💥 仓储空间爆满，热身经营结束！\n您的最终商战收益: ￥" + score + "\n\n请输入主理人姓名/组号登记全服大富翁榜：");
-    if (!username) username = "神秘店长";
-
-    if (supabase) {
-        try {
-            await supabase.from('leaderboard').insert([{ name: username, score: score }]);
-            const { data, error } = await supabase.from('leaderboard').select('name, score').order('score', { ascending: false }).limit(5);
-            if (error) throw error;
-
-            let rankText = "🏆 【WYEF交易热身战】历史收益 TOP 5 排行榜 🏆\n=========================\n";
-            data.forEach((row, index) => {
-                rankText += `第 ${index + 1}名：${row.name}  ➔ ￥${row.score}\n`;
-            });
-            rankText += "=========================\n💡 欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！";
-            alert(rankText);
-
-        } catch (err) {
-            console.error("数据库连接错误:", err);
-            alert("💥 资源未能有效整合！热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
-        }
-    } else {
-        alert("💥 经营结束！最终收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
-    }
-    location.reload(); 
-}
 
 // 在画布上动态绘制红色警戒虚线
 Events.on(render, 'afterRender', () => {
@@ -468,7 +422,7 @@ function createSynthesizedBody(x, y, type) {
     return newBody;
 }
 
-// 点击按钮开始游戏
+// 点击按钮开始游戏，才触发第一次物料掉落
 document.getElementById('start-game-btn').addEventListener('click', () => {
     document.getElementById('intro-screen').style.display = 'none'; 
     spawnNext(); 
