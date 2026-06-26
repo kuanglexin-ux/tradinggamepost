@@ -25,7 +25,7 @@
             margin-bottom: 15px;
             user-select: none;
         }
-        /* 🎯 为游戏区域设置固定宽高，方便规则页面完美绝对定位覆盖 */
+        /* 为游戏区域设置固定宽高，方便规则页面完美绝对定位覆盖 */
         #game-container {
             position: relative;
             width: 360px;
@@ -40,7 +40,7 @@
             height: 100%;
             touch-action: none; 
         }
-        /* 🎯 核心新加：规则讲解页面样式 */
+        /* 规则讲解页面样式 */
         #intro-screen {
             position: absolute;
             top: 0;
@@ -55,7 +55,7 @@
             padding: 20px;
             color: #5c3a21;
         }
-        /* 🎯 修改1：更新标题样式，使用 flexbox 居中对齐图片和文字 */
+        /* 更新标题样式，使用 flexbox 居中对齐图片和文字 */
         .intro-title {
             font-size: 20px;
             font-weight: bold;
@@ -63,15 +63,15 @@
             margin-bottom: 12px;
             border-bottom: 2px dashed #e67e22;
             padding-bottom: 8px;
-            display: flex; /* 使用 flex 布局 */
-            justify-content: center; /* 水平居中 */
-            align-items: center; /* 垂直居中 */
-            gap: 8px; /* 图片和文字之间的间距 */
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 8px; 
         }
-        /* 🎯 修改2：为标题中的图片设置样式 */
+        /* 为标题中的图片设置样式 */
         .intro-title img {
-            height: 24px; /* 设置高度，与文字匹配 */
-            width: auto; /* 保持宽高比 */
+            height: 24px; 
+            width: auto; 
         }
         .intro-content {
             font-size: 13px;
@@ -86,7 +86,7 @@
             margin: 0 0 10px 0;
             text-indent: 2em;
         }
-        /* 🎯 合成路线可视化排版 */
+        /* 合成路线可视化排版 */
         .route-box {
             background: #f3ecda;
             border-radius: 6px;
@@ -141,17 +141,17 @@
         <div id="intro-screen">
             <div class="intro-title"><img src="assets/wyef_logo.png" alt="WYEF Logo">集桶大富翁 · WYEF交易热身战</div>
             <div class="intro-content">
-                <p>亲爱的各位ASEEDER未来创业家，在正式交易大战之前，为了让大家提前感受资源整合交易游戏的氛围，ABS委员会推出了番外版小手游——<b>集桶大富翁 - WYEF交易热身战</b>。</p>
+                <p>亲爱的各位ABSer未来创业家，为了让大家提前感受资源整合交易游戏的氛围，ABS委员会推出了番外版小手游——<b>集桶大富翁 - WYEF交易热身战</b>。</p>
                 <p>各位将化身本地炸鸡连锁店店长，为了制作尽可能多的全家桶，需收集并整合各类掉落素材。大家知道，未加整合的单一素材，溢价空间有限，亦难以收获顾客的关注——无论是单一的食材，还是烹饪的调料，或是一个品牌。当被整合成为明星产品，获得市场关注后，产品在市场上的溢价空间才得以提升，扩大企业营收。作为合成产品的素材，也会因为收获更多市场关注而产生更高的市场价值。</p>
                 <p>就像亨氏番茄酱当年因为麦当劳薯条的热卖而获得更多市场关注，麦当劳也因为门店推出的出圈套餐而收获更高的定价权。各位店长也请在游戏中尽可能地整合出更多的炸鸡全家桶，扩张自己的收益。每整合出一个全家桶，即可提升100元收益！</p>
                 
                 <div class="route-box">
                     <div class="route-title">📋 核心供应链整合路线：</div>
                     <div class="route-line">
-                        🔥 经典线：<span>白羽鸡</span> ➕ <span>香料包</span> ➔ <span>烤鸡翅</span>
+                        🔥 经典线：<span>🐔白羽鸡</span> ➕ <span>🌶️辣料包</span> ➔ <span>🐦‍🔥烤鸡翅</span>
                     </div>
                     <div class="route-line">
-                        ⚡ 黄金线：<span>黄羽鸡</span> ➕ <span>胡椒粉</span> ➔ <span>烤鸡腿</span>
+                        ⚡ 黄金线：<span>🐤黄羽鸡</span> ➕ <span>🧂胡椒粉</span> ➔ <span>🍗烤鸡腿</span>
                     </div>
                     <div class="route-line">
                         全家桶：<span>任意烤鸡</span> ➕ <span>品牌桶</span> ➔ <span>豪华全家桶(￥100)</span>
@@ -238,12 +238,13 @@ const TYPES = {
     }
 };
 
+// 🎯 核心改动：已将 EMPTY 权重提升 8%，并从其余 4 种素材中均摊扣除
 const spawnablePool = [
-    { type: TYPES.WING,        weight: 23.416 },
-    { type: TYPES.YELLOW_WING, weight: 23.416 },
-    { type: TYPES.RED_SPICE,   weight: 23.416 },
-    { type: TYPES.SPICE,       weight: 17.000 }, 
-    { type: TYPES.EMPTY,       weight: 12.750 }  
+    { type: TYPES.WING,        weight: 21.416 },
+    { type: TYPES.YELLOW_WING, weight: 21.416 },
+    { type: TYPES.RED_SPICE,   weight: 21.416 },
+    { type: TYPES.SPICE,       weight: 15.000 }, 
+    { type: TYPES.EMPTY,       weight: 20.750 }  
 ];
 
 let currentBody = null;
@@ -311,8 +312,7 @@ Events.on(engine, 'afterUpdate', () => {
         if (gameOverTimer > 120) {
             isGameOver = true;
             currentBody = null;
-            // 🎯 这里已经帮你修复完毕！
-            alert("💥 仓储空间爆满！热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的成绩到评论区比拼大家的收益。2026.7.29-8.3 WYEF上海见！");
+            alert("💥 仓储空间爆满，热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
             location.reload(); 
         }
     } else {
@@ -424,8 +424,8 @@ function createSynthesizedBody(x, y, type) {
 
 // 点击按钮开始游戏，才触发第一次物料掉落
 document.getElementById('start-game-btn').addEventListener('click', () => {
-    document.getElementById('intro-screen').style.display = 'none'; // 隐藏规则层
-    spawnNext(); // 正式启动游戏
+    document.getElementById('intro-screen').style.display = 'none'; 
+    spawnNext(); 
 });
 </script>
 </body>
