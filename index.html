@@ -131,6 +131,25 @@
             color: #a0522d;
             font-size: 14px;
         }
+        /* 🎯 新增：音量控制开关悬浮样式 */
+        #music-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 95; /* 在欢迎页下方，但在画布上方 */
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #8B4513;
+            border-radius: 50%;
+            display: none; /* 游戏未正式开始前先隐藏 */
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
     </style>
 </head>
 <body>
@@ -138,12 +157,14 @@
     <div id="score-board">收益: ￥<span id="score">0</span></div>
     
     <div id="game-container">
+        <div id="music-btn">🎵</div>
+
         <div id="intro-screen">
             <div class="intro-title"><img src="assets/wyef_logo.png" alt="WYEF Logo">集桶大富翁 · WYEF交易热身战</div>
             <div class="intro-content">
                 <p>亲爱的各位ABSer未来创业家，为了让大家提前感受资源整合交易游戏的氛围，ABS委员会推出了番外版小手游——<b>集桶大富翁 - WYEF交易热身战</b>。</p>
-                <p>各位将化身本地炸鸡连锁店店长，为了制作尽可能多的全家桶，需收集并整合各类掉落素材。大家知道，未加整合的单一素材，溢价空间有限，亦难以收获顾客的关注——无论是单一的食材，还是烹饪的调料，或是一个品牌。当被整合成为明星产品，获得市场关注后，产品在市场上的溢价空间才得以提升，扩大企业营收。作为合成产品的素材，也会因为收获更多市场关注而产生更高的市场价值。</p>
-                <p>就像亨氏番茄酱当年因为麦当劳薯条的热卖而获得更多市场关注，麦当劳也因为门店推出的出圈套餐而收获更高的定价权。各位店长也请在游戏中尽可能地整合出更多的炸鸡全家桶，扩张自己的收益。每整合出一个全家桶，即可提升100元收益！</p>
+                <p>各位将化身本地炸鸡连锁店店长，为了制作尽可能多的全家桶，需收集并整合各类掉落素材。大家知道，未加整合的单一素材，溢价空间有限，亦难以收获顾客关注——无论是单一的食材，还是调料，或是一个品牌。当被整合成为明星产品，获得市场关注后，产品在市场上的溢价空间才得以提升，扩大企业营收。作为合成产品的素材，也会因为收获更多市场关注而产生更高的市场价值。</p>
+                <p>就像亨氏番茄酱当年因为麦当劳薯条的热卖而获得更多市场关注，麦当劳也因为门店的出圈套餐而收获更高的定价权。各位店长也请在游戏中尽可能地整合出更多的炸鸡全家桶，扩张自己的收益。每整合出一个全家桶，即可提升100元收益！</p>
                 
                 <div class="route-box">
                     <div class="route-title">📋 核心供应链整合路线：</div>
@@ -170,6 +191,11 @@
     <div id="tip">💡 在屏幕上左右滑动控制方向</div>
 
 <script>
+// 🎯 核心新加：初始化本地BGM音频流（解决移动端无法自动播放的策略）
+const bgm = new Audio('music/bgm.mp3');
+bgm.loop = true;       // 开启无限循环
+bgm.volume = 0.4;      // 默认适中音量
+
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
 const width = 360;  
@@ -238,7 +264,6 @@ const TYPES = {
     }
 };
 
-// 🎯 核心改动：已将 EMPTY 权重提升 8%，并从其余 4 种素材中均摊扣除
 const spawnablePool = [
     { type: TYPES.WING,        weight: 21.416 },
     { type: TYPES.YELLOW_WING, weight: 21.416 },
@@ -249,7 +274,7 @@ const spawnablePool = [
 
 let currentBody = null;
 let targetX = width / 2; 
-const fallSpeed = 3.9;   
+const fallSpeed = 4.15;   
 
 // 4. 生成新素材
 function spawnNext() {
@@ -302,6 +327,7 @@ Events.on(engine, 'afterUpdate', () => {
     allBodies.forEach(body => {
         if (!body.isStatic && body !== currentBody && body.position.y < 80) {
             if (Math.abs(body.velocity.y) < 0.3) {
+                hasBlockDamage = true;
                 hasBlockage = true;
             }
         }
@@ -312,6 +338,11 @@ Events.on(engine, 'afterUpdate', () => {
         if (gameOverTimer > 120) {
             isGameOver = true;
             currentBody = null;
+            
+            // 🎯 爆仓结束时同步暂停 BGM
+            bgm.pause();
+            
+            // 弹出纯净单机版包含 WYEF 专属时间的结算文案
             alert("💥 仓储空间爆满，热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
             location.reload(); 
         }
@@ -400,7 +431,7 @@ Events.on(engine, 'collisionStart', (event) => {
         }
 
         // 消除 2
-        if ((labelA === 'red_roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'red_roasted')) {
+        if ((labelA === 'red_roasted' && labelB === 'empty') || (labelA === 'empty' && decline === 'red_roasted' || labelB === 'red_roasted' && labelA === 'empty')) {
             Composite.remove(world, [bodyA, bodyB]);
             let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
             setTimeout(() => {
@@ -422,10 +453,30 @@ function createSynthesizedBody(x, y, type) {
     return newBody;
 }
 
-// 点击按钮开始游戏，才触发第一次物料掉落
+// 🎯 点击“开启店长经营”按钮开始游戏
 document.getElementById('start-game-btn').addEventListener('click', () => {
     document.getElementById('intro-screen').style.display = 'none'; 
+    
+    // 1. 让右上角音乐切音按钮显示
+    document.getElementById('music-btn').style.display = 'flex';
+    
+    // 2. 利用玩家这一次真实的点击行为，绕过浏览器的安全声音策略，立即激活播放BGM
+    bgm.play().catch(err => {
+        console.warn("音频解码在当前浏览器中受到限制，推送上线后表现更佳:", err);
+    });
+
     spawnNext(); 
+});
+
+// 🎯 新增：点击右上角圆圈，随时在“静音🔇”和“播放🎵”状态间自由互锁
+document.getElementById('music-btn').addEventListener('click', () => {
+    if (bgm.paused) {
+        bgm.play();
+        document.getElementById('music-btn').innerText = '🎵';
+    } else {
+        bgm.pause();
+        document.getElementById('music-btn').innerText = '🔇';
+    }
 });
 </script>
 </body>
