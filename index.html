@@ -1,17 +1,16 @@
-<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>合成大炸鸡桶 - 完美概率平衡版</title>
+    <title>集桶大富翁 - WYEF交易热身战</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         body {
             margin: 0;
             padding: 0;
             background: #f7edd6;
-            font-family: Arial, sans-serif;
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -26,13 +25,106 @@
             margin-bottom: 15px;
             user-select: none;
         }
-        #game-area {
+        /* 🎯 为游戏区域设置固定宽高，方便规则页面完美绝对定位覆盖 */
+        #game-container {
             position: relative;
+            width: 360px;
+            height: 540px;
             border: 4px solid #8B4513;
             border-radius: 10px;
-            background: #fffef9;
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        #game-area {
+            width: 100%;
+            height: 100%;
             touch-action: none; 
+        }
+        /* 🎯 核心新加：规则讲解页面样式 */
+        #intro-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fdfaf2;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 20px;
+            color: #5c3a21;
+        }
+        /* 🎯 修改1：更新标题样式，使用 flexbox 居中对齐图片和文字 */
+        .intro-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #d35400;
+            margin-bottom: 12px;
+            border-bottom: 2px dashed #e67e22;
+            padding-bottom: 8px;
+            display: flex; /* 使用 flex 布局 */
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+            gap: 8px; /* 图片和文字之间的间距 */
+        }
+        /* 🎯 修改2：为标题中的图片设置样式 */
+        .intro-title img {
+            height: 24px; /* 设置高度，与文字匹配 */
+            width: auto; /* 保持宽高比 */
+        }
+        .intro-content {
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: justify;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 5px;
+            margin-bottom: 15px;
+        }
+        .intro-content p {
+            margin: 0 0 10px 0;
+            text-indent: 2em;
+        }
+        /* 🎯 合成路线可视化排版 */
+        .route-box {
+            background: #f3ecda;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            border-left: 4px solid #d35400;
+        }
+        .route-title {
+            font-weight: bold;
+            color: #d35400;
+            margin-bottom: 5px;
+        }
+        .route-line {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin: 4px 0;
+            background: rgba(255,255,255,0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .route-line span { font-weight: bold; }
+        .start-btn {
+            background: #d35400;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 0;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(211, 84, 0, 0.3);
+            transition: background 0.2s;
+        }
+        .start-btn:active {
+            background: #b34500;
         }
         #tip {
             margin-top: 10px;
@@ -43,8 +135,38 @@
 </head>
 <body>
 
-    <div id="score-board">积分: <span id="score">0</span></div>
-    <div id="game-area"></div>
+    <div id="score-board">收益: ￥<span id="score">0</span></div>
+    
+    <div id="game-container">
+        <div id="intro-screen">
+            <div class="intro-title"><img src="assets/wyef_logo.png" alt="WYEF Logo">集桶大富翁 · WYEF交易热身战</div>
+            <div class="intro-content">
+                <p>亲爱的各位ASEEDER未来创业家，在正式交易大战之前，为了让大家提前感受资源整合交易游戏的氛围，ABS委员会推出了番外版小手游——<b>集桶大富翁 - WYEF交易热身战</b>。</p>
+                <p>各位将化身本地炸鸡连锁店店长，为了制作尽可能多的全家桶，需收集并整合各类掉落素材。大家知道，未加整合的单一素材，溢价空间有限，亦难以收获顾客的关注——无论是单一的食材，还是烹饪的调料，或是一个品牌。当被整合成为明星产品，获得市场关注后，产品在市场上的溢价空间才得以提升，扩大企业营收。作为合成产品的素材，也会因为收获更多市场关注而产生更高的市场价值。</p>
+                <p>就像亨氏番茄酱当年因为麦当劳薯条的热卖而获得更多市场关注，麦当劳也因为门店推出的出圈套餐而收获更高的定价权。各位店长也请在游戏中尽可能地整合出更多的炸鸡全家桶，扩张自己的收益。每整合出一个全家桶，即可提升100元收益！</p>
+                
+                <div class="route-box">
+                    <div class="route-title">📋 核心供应链整合路线：</div>
+                    <div class="route-line">
+                        🔥 经典线：<span>白羽鸡</span> ➕ <span>香料包</span> ➔ <span>烤鸡翅</span>
+                    </div>
+                    <div class="route-line">
+                        ⚡ 黄金线：<span>黄羽鸡</span> ➕ <span>胡椒粉</span> ➔ <span>烤鸡腿</span>
+                    </div>
+                    <div class="route-line">
+                        🪣 终极包装：<span>任意烤鸡</span> ➕ <span>品牌桶</span> ➔ <span>豪华全家桶(￥100)</span>
+                    </div>
+                    <div style="font-size:11px; color:#7f8c8d; margin-top:5px; text-indent:0;">
+                        * 提示：错序碰撞（如活鸡碰空桶）无法触发整合，将占用宝贵的仓储空间。
+                    </div>
+                </div>
+            </div>
+            <button class="start-btn" id="start-game-btn">🚀 开启店长经营</button>
+        </div>
+
+        <div id="game-area"></div>
+    </div>
+    
     <div id="tip">💡 在屏幕上左右滑动控制方向</div>
 
 <script>
@@ -53,8 +175,8 @@ const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 const width = 360;  
 const height = 540;
 let score = 0;
-let isGameOver = false;    // 🎯 游戏结束状态开关
-let gameOverTimer = 0;     // 🎯 堆叠时间计数器（帧数）
+let isGameOver = false;    
+let gameOverTimer = 0;     
 
 // 1. 初始化引擎
 const engine = Engine.create();
@@ -126,11 +248,11 @@ const spawnablePool = [
 
 let currentBody = null;
 let targetX = width / 2; 
-const fallSpeed = 5.8;   
+const fallSpeed = 4.3;   
 
 // 4. 生成新素材
 function spawnNext() {
-    if (isGameOver) return; // 如果游戏结束，停止生成
+    if (isGameOver) return; 
 
     let randomNum = Math.random() * 100;
     let currentType = spawnablePool[0].type; 
@@ -169,7 +291,7 @@ Events.on(engine, 'beforeUpdate', () => {
     }
 });
 
-// 🎯 核心新加：实时扫描爆仓检测逻辑
+// 实时扫描爆仓检测逻辑
 Events.on(engine, 'afterUpdate', () => {
     if (isGameOver) return;
 
@@ -177,9 +299,7 @@ Events.on(engine, 'afterUpdate', () => {
     let hasBlockage = false;
 
     allBodies.forEach(body => {
-        // 判定条件：非固定边界、不是当前控制的掉落物、且中心高度堆叠到了 y < 80 的危险区
         if (!body.isStatic && body !== currentBody && body.position.y < 80) {
-            // 确保物体是“停稳”或由于挤压蠕动很慢的状态，防止高空弹跳误判
             if (Math.abs(body.velocity.y) < 0.3) {
                 hasBlockage = true;
             }
@@ -187,30 +307,30 @@ Events.on(engine, 'afterUpdate', () => {
     });
 
     if (hasBlockage) {
-        gameOverTimer += 1; // 满足条件时，逐帧累加时间
-        // 60帧约为1秒，这里设置 120 帧（即稳稳堆积超过 2 秒钟时触发 Game Over）
+        gameOverTimer += 1; 
         if (gameOverTimer > 120) {
             isGameOver = true;
             currentBody = null;
-            alert("💥 炸鸡桶爆仓啦！游戏结束！\n您的最终得分: " + score);
-            location.reload(); // 点击弹窗确认后自动刷新重开
+            // 🎯 这里已经帮你修复完毕！
+            alert("💥 仓储空间爆满，资源未能有效整合！热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图你的成绩分享到评论区比拼大家的收益！");
+            location.reload(); 
         }
     } else {
-        gameOverTimer = 0; // 一旦没有堵塞，立刻重置计数器
+        gameOverTimer = 0; 
     }
 });
 
-// 🎯 核心新加：在画布上动态绘制红色警戒虚线
+// 在画布上动态绘制红色警戒虚线
 Events.on(render, 'afterRender', () => {
     const context = render.context;
     context.beginPath();
-    context.setLineDash([6, 6]); // 设置 6像素实线，6像素空白的虚线样式
-    context.moveTo(0, 80);       // 起点在左墙 y=80
-    context.lineTo(width, 80);   // 终点在右墙 y=80
-    context.strokeStyle = '#e74c3c'; // 危险红
+    context.setLineDash([6, 6]); 
+    context.moveTo(0, 80);       
+    context.lineTo(width, 80);   
+    context.strokeStyle = '#e74c3c'; 
     context.lineWidth = 2;
     context.stroke();
-    context.setLineDash([]);     // 恢复实线画笔，避免污染引擎自带的渲染
+    context.setLineDash([]);     
 });
 
 // 6. 触控与鼠标事件绑定
@@ -256,7 +376,7 @@ Events.on(engine, 'collisionStart', (event) => {
         let midX = (bodyA.position.x + bodyB.position.x) / 2;
         let midY = (bodyA.position.y + bodyB.position.y) / 2;
 
-        // 路线 1（经典线）
+        // 路线 1
         if ((labelA === 'wing' && labelB === 'spice') || (labelA === 'spice' && labelB === 'wing')) {
             Composite.remove(world, [bodyA, bodyB]);
             createSynthesizedBody(midX, midY, TYPES.ROASTED);
@@ -268,7 +388,7 @@ Events.on(engine, 'collisionStart', (event) => {
             createSynthesizedBody(midX, midY, TYPES.RED_ROASTED);
         }
         
-        // 消除 1（经典线入桶）
+        // 消除 1
         if ((labelA === 'roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'roasted')) {
             Composite.remove(world, [bodyA, bodyB]);
             let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
@@ -279,7 +399,7 @@ Events.on(engine, 'collisionStart', (event) => {
             }, 150);
         }
 
-        // 消除 2（新路线入桶）
+        // 消除 2
         if ((labelA === 'red_roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'red_roasted')) {
             Composite.remove(world, [bodyA, bodyB]);
             let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
@@ -302,268 +422,11 @@ function createSynthesizedBody(x, y, type) {
     return newBody;
 }
 
-spawnNext();
+// 点击按钮开始游戏，才触发第一次物料掉落
+document.getElementById('start-game-btn').addEventListener('click', () => {
+    document.getElementById('intro-screen').style.display = 'none'; // 隐藏规则层
+    spawnNext(); // 正式启动游戏
+});
 </script>
 </body>
-=======
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>合成大炸鸡桶 - 完美概率平衡版</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #f7edd6;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #score-board {
-            font-size: 24px;
-            font-weight: bold;
-            color: #8B4513;
-            margin-bottom: 15px;
-            user-select: none;
-        }
-        #game-area {
-            position: relative;
-            border: 4px solid #8B4513;
-            border-radius: 10px;
-            background: #fffef9;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            touch-action: none; 
-        }
-        #tip {
-            margin-top: 10px;
-            color: #a0522d;
-            font-size: 14px;
-        }
-    </style>
-</head>
-<body>
-
-    <div id="score-board">积分: <span id="score">0</span></div>
-    <div id="game-area"></div>
-    <div id="tip">💡 在屏幕上左右滑动控制方向</div>
-
-<script>
-const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
-
-const width = 360;  
-const height = 540;
-let score = 0;
-
-// 1. 初始化引擎
-const engine = Engine.create();
-const world = engine.world;
-const render = Render.create({
-    element: document.getElementById('game-area'),
-    engine: engine,
-    options: { 
-        width, 
-        height, 
-        wireframes: false, 
-        background: '#fffef9' 
-    }
-});
-
-Render.run(render);
-const runner = Runner.create();
-Runner.run(runner, engine);
-
-// 2. 创建边界
-const ground = Bodies.rectangle(width/2, height + 20, width, 60, { isStatic: true, render: { fillStyle: '#8B4513' } });
-const leftWall = Bodies.rectangle(-20, height/2, 50, height, { isStatic: true });
-const rightWall = Bodies.rectangle(width + 20, height/2, 50, height, { isStatic: true });
-Composite.add(world, [ground, leftWall, rightWall]);
-
-// 3. 素材基本属性配置（已完整保留你微调后的所有图片缩放参数）
-const TYPES = {
-    WING: { 
-        label: 'wing', radius: 27.7, 
-        render: { fillStyle: '#f39c12', sprite: { texture: 'assets/wing.png', xScale: 0.38, yScale: 0.38 } } 
-    },
-    SPICE: { 
-        label: 'spice', radius: 17.1, 
-        render: { fillStyle: '#e74c3c', sprite: { texture: 'assets/spice.png', xScale: 0.2, yScale: 0.181 } } 
-    },
-    ROASTED: { 
-        label: 'roasted', radius: 32.7, 
-        render: { fillStyle: '#d35400', sprite: { texture: 'assets/roasted_wing.png', xScale: 0.122, yScale: 0.109 } } 
-    },
-    YELLOW_WING: {
-        label: 'yellow_wing', radius: 27.7, 
-        render: { fillStyle: '#f1c40f', sprite: { texture: 'assets/yellow_wing.png', xScale: 0.18, yScale: 0.18 } }
-    },
-    RED_SPICE: {
-        label: 'red_spice', radius: 17.1, 
-        render: { fillStyle: '#c0392b', sprite: { texture: 'assets/red_spice.png', xScale: 0.135, yScale: 0.121 } }
-    },
-    RED_ROASTED: {
-        label: 'red_roasted', radius: 32.7, 
-        render: { fillStyle: '#962d22', sprite: { texture: 'assets/red_roasted_wing.png', xScale: 0.42, yScale: 0.38 } }
-    },
-    EMPTY: { 
-        label: 'empty', radius: 30, 
-        render: { fillStyle: '#95a5a6', sprite: { texture: 'assets/empty_bucket.png', xScale: 0.35, yScale: 0.35 } } 
-    },
-    FANCY: { 
-        label: 'fancy', radius: 40, 
-        render: { fillStyle: '#2ecc71', sprite: { texture: 'assets/fancy_bucket.png', xScale: 0.3, yScale: 0.3 } } 
-    }
-};
-
-// 🎯 核心改动：已根据最新需求重新分配权重（总权重 100）
-// EMPTY 进一步降低至 12.75%，SPICE 降低至 17.00%，其余三种素材平分剩余概率（各约 23.42%）
-const spawnablePool = [
-    { type: TYPES.WING,        weight: 23.416 },
-    { type: TYPES.YELLOW_WING, weight: 23.416 },
-    { type: TYPES.RED_SPICE,   weight: 23.416 },
-    { type: TYPES.SPICE,       weight: 17.000 }, // 🎯 已降低 20%
-    { type: TYPES.EMPTY,       weight: 12.750 }  // 🎯 已再降低 15%
-];
-
-let currentBody = null;
-let targetX = width / 2; 
-const fallSpeed = 4.8;   // 保持你调整后的高流速
-
-// 4. 生成新素材（基于新权重区间）
-function spawnNext() {
-    let randomNum = Math.random() * 100;
-    let currentType = spawnablePool[0].type; 
-    
-    let sum = 0;
-    for (let i = 0; i < spawnablePool.length; i++) {
-        sum += spawnablePool[i].weight;
-        if (randomNum <= sum) {
-            currentType = spawnablePool[i].type;
-            break;
-        }
-    }
-
-    targetX = width / 2; 
-    currentBody = Bodies.circle(targetX, 40, currentType.radius, {
-        label: currentType.label,
-        render: currentType.render,
-        restitution: 0.2,
-        friction: 0.1
-    });
-    
-    Composite.add(world, currentBody);
-}
-
-// 5. 让素材在玩家手中时缓慢自动下落
-Events.on(engine, 'beforeUpdate', () => {
-    if (currentBody) {
-        let nextX = currentBody.position.x + (targetX - currentBody.position.x) * 0.2;
-        let nextY = currentBody.position.y + fallSpeed;
-        
-        const radius = currentBody.circleRadius;
-        nextX = Math.max(radius, Math.min(width - radius, nextX));
-
-        Body.setPosition(currentBody, { x: nextX, y: nextY });
-        Body.setVelocity(currentBody, { x: 0, y: 0 });
-    }
-});
-
-// 6. 触控与鼠标事件绑定
-const gameArea = document.getElementById('game-area');
-
-function handleMove(clientX) {
-    const rect = gameArea.getBoundingClientRect();
-    const relativeX = clientX - rect.left;
-    targetX = relativeX;
-}
-
-gameArea.addEventListener('touchmove', (e) => {
-    if (e.touches.length > 0) {
-        handleMove(e.touches[0].clientX);
-    }
-}, { passive: true });
-
-gameArea.addEventListener('mousemove', (e) => {
-    if (e.buttons === 1 || currentBody) { 
-        handleMove(e.clientX);
-    }
-});
-
-// 7. 碰撞与合成逻辑
-Events.on(engine, 'collisionStart', (event) => {
-    const pairs = event.pairs;
-    
-    pairs.forEach((pair) => {
-        const bodyA = pair.bodyA;
-        const bodyB = pair.bodyB;
-        
-        if (currentBody && (bodyA === currentBody || bodyB === currentBody)) {
-            const otherBody = bodyA === currentBody ? bodyB : bodyA;
-            if (otherBody !== leftWall && otherBody !== rightWall) {
-                currentBody = null; 
-                setTimeout(spawnNext, 800); 
-            }
-        }
-
-        const labelA = bodyA.label;
-        const labelB = bodyB.label;
-        let midX = (bodyA.position.x + bodyB.position.x) / 2;
-        let midY = (bodyA.position.y + bodyB.position.y) / 2;
-
-        // 路线 1（经典线）
-        if ((labelA === 'wing' && labelB === 'spice') || (labelA === 'spice' && labelB === 'wing')) {
-            Composite.remove(world, [bodyA, bodyB]);
-            createSynthesizedBody(midX, midY, TYPES.ROASTED);
-        }
-        
-        // 路线 2 (黄红双配对线)
-        if ((labelA === 'yellow_wing' && labelB === 'red_spice') || (labelA === 'red_spice' && labelB === 'yellow_wing')) {
-            Composite.remove(world, [bodyA, bodyB]);
-            createSynthesizedBody(midX, midY, TYPES.RED_ROASTED);
-        }
-        
-        // 消除 1（经典线入桶）
-        if ((labelA === 'roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'roasted')) {
-            Composite.remove(world, [bodyA, bodyB]);
-            let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
-            setTimeout(() => {
-                Composite.remove(world, fancy);
-                score += 100;
-                document.getElementById('score').innerText = score;
-            }, 150);
-        }
-
-        // 消除 2（新路线入桶）
-        if ((labelA === 'red_roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'red_roasted')) {
-            Composite.remove(world, [bodyA, bodyB]);
-            let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
-            setTimeout(() => {
-                Composite.remove(world, fancy);
-                score += 100;
-                document.getElementById('score').innerText = score;
-            }, 150);
-        }
-    });
-});
-
-function createSynthesizedBody(x, y, type) {
-    const newBody = Bodies.circle(x, y, type.radius, {
-        label: type.label,
-        render: type.render,
-        restitution: 0.3
-    });
-    Composite.add(world, newBody);
-    return newBody;
-}
-
-spawnNext();
-</script>
-</body>
->>>>>>> c514b2a0096586277b5cb1ccabfaa830388d3704
 </html>
