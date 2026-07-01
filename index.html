@@ -131,7 +131,7 @@
             color: #a0522d;
             font-size: 14px;
         }
-        /* 🎯 新增：音量控制开关悬浮样式 */
+        /* 音量控制开关悬浮样式 */
         #music-btn {
             position: absolute;
             top: 12px;
@@ -149,6 +149,49 @@
             cursor: pointer;
             user-select: none;
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* 🎯 新增：游戏结束结算与大奖弹窗样式 */
+        #gameover-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fdfaf2;
+            z-index: 105; /* 覆盖在所有页面最上层 */
+            display: none; /* 默认隐藏 */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            padding: 24px;
+            color: #5c3a21;
+            text-align: center;
+        }
+        #reward-img {
+            width: 160px;
+            height: auto;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+            display: none; /* 默认隐藏，点击后显示 */
+        }
+        .gameover-btn {
+            background: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 0;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 8px rgba(230, 126, 34, 0.3);
+        }
+        .gameover-btn:active {
+            background: #d35400;
         }
     </style>
 </head>
@@ -185,13 +228,24 @@
             <button class="start-btn" id="start-game-btn">🚀 开启店长经营</button>
         </div>
 
+        <div id="gameover-screen">
+            <div style="font-size: 22px; font-weight: bold; color: #d35400; margin-bottom: 15px;">📊 经营结算报告</div>
+            <div id="gameover-text" style="font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 20px;"></div>
+            
+            <button class="gameover-btn" id="claim-btn">🎁 点击收获你的奖励</button>
+            
+            <img id="reward-img" src="assets/Hot_Wing.png" alt="Hot Wing 奖励">
+            
+            <button class="gameover-btn" id="restart-btn" style="background: #7f8c8d; box-shadow: 0 4px 8px rgba(127, 140, 141, 0.2);">🔄 重新经营</button>
+        </div>
+
         <div id="game-area"></div>
     </div>
     
     <div id="tip">💡 在屏幕上左右滑动控制方向</div>
 
 <script>
-// 🎯 核心新加：初始化本地BGM音频流（解决移动端无法自动播放的策略）
+// 初始化本地BGM音频流（解决移动端无法自动播放的策略）
 const bgm = new Audio('music/bgm.mp3');
 bgm.loop = true;       // 开启无限循环
 bgm.volume = 0.4;      // 默认适中音量
@@ -274,7 +328,7 @@ const spawnablePool = [
 
 let currentBody = null;
 let targetX = width / 2; 
-const fallSpeed = 4.15;   
+const fallSpeed = 4.25;   
 
 // 4. 生成新素材
 function spawnNext() {
@@ -327,7 +381,6 @@ Events.on(engine, 'afterUpdate', () => {
     allBodies.forEach(body => {
         if (!body.isStatic && body !== currentBody && body.position.y < 80) {
             if (Math.abs(body.velocity.y) < 0.3) {
-                hasBlockDamage = true;
                 hasBlockage = true;
             }
         }
@@ -339,12 +392,24 @@ Events.on(engine, 'afterUpdate', () => {
             isGameOver = true;
             currentBody = null;
             
-            // 🎯 爆仓结束时同步暂停 BGM
+            // 爆仓结束时同步暂停 BGM
             bgm.pause();
             
-            // 弹出纯净单机版包含 WYEF 专属时间的结算文案
-            alert("💥 仓储空间爆满，热身经营结束！\n您的最终商战收益: ￥" + score + "\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！");
-            location.reload(); 
+            // 统一的结算文字
+            const closingText = "💥 仓储空间爆满，热身经营结束！\n\n您的最终商战收益: ￥" + score + "\n\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！";
+            
+            // 🎯 核心逻辑分支：判断分数是否大于 6000
+            if (score > 6000) {
+                // 大于 6000 分：拉起自定义弹窗，允许领奖和看图
+                document.getElementById('gameover-text').innerText = closingText;
+                document.getElementById('claim-btn').style.display = 'block'; // 确保领奖按钮可见
+                document.getElementById('reward-img').style.display = 'none';   // 隐藏图片等待点击
+                document.getElementById('gameover-screen').style.display = 'flex';
+            } else {
+                // 不大于 6000 分：维持原本的传统单机弹窗逻辑
+                alert(closingText);
+                location.reload(); 
+            }
         }
     } else {
         gameOverTimer = 0; 
@@ -430,8 +495,8 @@ Events.on(engine, 'collisionStart', (event) => {
             }, 150);
         }
 
-        // 消除 2
-        if ((labelA === 'red_roasted' && labelB === 'empty') || (labelA === 'empty' && decline === 'red_roasted' || labelB === 'red_roasted' && labelA === 'empty')) {
+        // 消除 2 (🎯 已修正原有变量拼写错漏问题)
+        if ((labelA === 'red_roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'red_roasted')) {
             Composite.remove(world, [bodyA, bodyB]);
             let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
             setTimeout(() => {
@@ -453,7 +518,7 @@ function createSynthesizedBody(x, y, type) {
     return newBody;
 }
 
-// 🎯 点击“开启店长经营”按钮开始游戏
+// 点击“开启店长经营”按钮开始游戏
 document.getElementById('start-game-btn').addEventListener('click', () => {
     document.getElementById('intro-screen').style.display = 'none'; 
     
@@ -468,7 +533,7 @@ document.getElementById('start-game-btn').addEventListener('click', () => {
     spawnNext(); 
 });
 
-// 🎯 新增：点击右上角圆圈，随时在“静音🔇”和“播放🎵”状态间自由互锁
+// 点击右上角圆圈，随时在“静音🔇”和“播放🎵”状态间自由互锁
 document.getElementById('music-btn').addEventListener('click', () => {
     if (bgm.paused) {
         bgm.play();
@@ -477,6 +542,17 @@ document.getElementById('music-btn').addEventListener('click', () => {
         bgm.pause();
         document.getElementById('music-btn').innerText = '🔇';
     }
+});
+
+// 🎯 新增事件：点击收获奖励按钮，隐藏按钮并展出 Hot_Wing.png
+document.getElementById('claim-btn').addEventListener('click', () => {
+    document.getElementById('claim-btn').style.display = 'none'; // 隐藏按钮
+    document.getElementById('reward-img').style.display = 'block'; // 展出图片
+});
+
+// 🎯 新增事件：点击重新经营按钮，刷新页面重来
+document.getElementById('restart-btn').addEventListener('click', () => {
+    location.reload();
 });
 </script>
 </body>
