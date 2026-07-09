@@ -151,7 +151,7 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
 
-        /* 🎯 新增：游戏结束结算与大奖弹窗样式 */
+        /* 游戏结束结算与大奖弹窗样式 */
         #gameover-screen {
             position: absolute;
             top: 0;
@@ -201,6 +201,11 @@
     
     <div id="game-container">
         <div id="music-btn">🎵</div>
+
+        <!-- ✨ 新增：神威特效全屏 GIF 遮罩层（设置 pointer-events: none 保证触控不被拦截） -->
+        <div id="kamui-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; justify-content: center; align-items: center; z-index: 110; pointer-events: none;">
+            <img id="kamui-gif" src="" style="width: 100%; height: auto; max-height: 100%;">
+        </div>
 
         <div id="intro-screen">
             <div class="intro-title"><img src="assets/wyef_logo.png" alt="WYEF Logo">集桶大富翁 · WYEF交易热身战</div>
@@ -398,7 +403,7 @@ Events.on(engine, 'afterUpdate', () => {
             // 统一的结算文字
             const closingText = "💥 仓储空间爆满，热身经营结束！\n\n您的最终商战收益: ￥" + score + "\n\n欢迎截图分享你的收益到评论区进行比拼。2026.7.29-8.3 WYEF上海见！";
             
-            // 🎯 核心逻辑分支：判断分数是否大于 8300
+            // 核心逻辑分支：判断分数是否大于 8300
             if (score > 8300) {
                 // 大于 8300 分：拉起自定义弹窗，允许领奖和看图
                 document.getElementById('gameover-text').innerText = closingText;
@@ -451,6 +456,43 @@ gameArea.addEventListener('mousemove', (e) => {
     }
 });
 
+// ✨ 新增：奇犽“神威”效果触发函数
+function triggerKamui() {
+    const overlay = document.getElementById('kamui-overlay');
+    const gif = document.getElementById('kamui-gif');
+    
+    // 每次通过附带随机时间戳来更新 src，从而强迫浏览器重新从第一帧播放该 GIF
+    gif.src = 'assets/kirua.gif?t=' + Date.now();
+    overlay.style.display = 'flex';
+    
+    // 获取游戏世界中所有的物体
+    const allBodies = Composite.allBodies(world);
+    let activeChickenRemoved = false;
+    
+    allBodies.forEach(body => {
+        // 如果是白羽鸡(wing)或黄羽鸡(yellow_wing)，一律从池子中带走清除
+        if (body.label === 'wing' || body.label === 'yellow_wing') {
+            // 如果被带走的刚好是玩家手里正在操作自动下落的鸡，需要特殊标记重置
+            if (body === currentBody) {
+                activeChickenRemoved = true;
+                currentBody = null;
+            }
+            Composite.remove(world, body);
+        }
+    });
+    
+    // 如果玩家手里的鸡碰巧被带走了，立即补生成下一只，防止物理循环中断
+    if (activeChickenRemoved) {
+        setTimeout(spawnNext, 400);
+    }
+    
+    // 2.5 秒后自动关闭奇犽 GIF 遮罩层，恢复正常对局（可以根据 kirua.gif 的实际时长微调此处 2500 毫秒）
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        gif.src = '';
+    }, 2500);
+}
+
 // 7. 碰撞与合成逻辑
 Events.on(engine, 'collisionStart', (event) => {
     const pairs = event.pairs;
@@ -492,10 +534,15 @@ Events.on(engine, 'collisionStart', (event) => {
                 Composite.remove(world, fancy);
                 score += 100;
                 document.getElementById('score').innerText = score;
+                
+                // ✨ 新增：检测得分是否触发奇犽神威
+                if (score % 700 === 0 && score > 0) {
+                    triggerKamui();
+                }
             }, 150);
         }
 
-        // 消除 2 (🎯 已修正原有变量拼写错漏问题)
+        // 消除 2
         if ((labelA === 'red_roasted' && labelB === 'empty') || (labelA === 'empty' && labelB === 'red_roasted')) {
             Composite.remove(world, [bodyA, bodyB]);
             let fancy = createSynthesizedBody(midX, midY, TYPES.FANCY);
@@ -503,6 +550,11 @@ Events.on(engine, 'collisionStart', (event) => {
                 Composite.remove(world, fancy);
                 score += 100;
                 document.getElementById('score').innerText = score;
+                
+                // ✨ 新增：检测得分是否触发奇犽神威
+                if (score % 700 === 0 && score > 0) {
+                    triggerKamui();
+                }
             }, 150);
         }
     });
@@ -544,13 +596,13 @@ document.getElementById('music-btn').addEventListener('click', () => {
     }
 });
 
-// 🎯 新增事件：点击收获奖励按钮，隐藏按钮并展出 Hot_Wing.png
+// 点击收获奖励按钮，隐藏按钮并展出 Hot_Wing.png
 document.getElementById('claim-btn').addEventListener('click', () => {
     document.getElementById('claim-btn').style.display = 'none'; // 隐藏按钮
     document.getElementById('reward-img').style.display = 'block'; // 展出图片
 });
 
-// 🎯 新增事件：点击重新经营按钮，刷新页面重来
+// 点击重新经营按钮，刷新页面重来
 document.getElementById('restart-btn').addEventListener('click', () => {
     location.reload();
 });
