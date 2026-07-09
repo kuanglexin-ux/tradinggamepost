@@ -202,7 +202,6 @@
     <div id="game-container">
         <div id="music-btn">🎵</div>
 
-        <!-- ✨ 新增：神威特效全屏 GIF 遮罩层（设置 pointer-events: none 保证触控不被拦截） -->
         <div id="kamui-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; justify-content: center; align-items: center; z-index: 110; pointer-events: none;">
             <img id="kamui-gif" src="" style="width: 100%; height: auto; max-height: 100%;">
         </div>
@@ -456,41 +455,47 @@ gameArea.addEventListener('mousemove', (e) => {
     }
 });
 
-// ✨ 新增：奇犽“神威”效果触发函数
+// ✨ 修改后：奇犽“神威”分段式效果触发函数
 function triggerKamui() {
     const overlay = document.getElementById('kamui-overlay');
     const gif = document.getElementById('kamui-gif');
     
-    // 每次通过附带随机时间戳来更新 src，从而强迫浏览器重新从第一帧播放该 GIF
-    gif.src = 'assets/kirua.gif?t=' + Date.now();
+    // 1. 第一阶段：拉起遮罩，先立即展示前摇蓄力图 assets/godspeed.png
+    gif.src = 'assets/godspeed.png';
     overlay.style.display = 'flex';
     
-    // 获取游戏世界中所有的物体
-    const allBodies = Composite.allBodies(world);
-    let activeChickenRemoved = false;
-    
-    allBodies.forEach(body => {
-        // 如果是白羽鸡(wing)或黄羽鸡(yellow_wing)，一律从池子中带走清除
-        if (body.label === 'wing' || body.label === 'yellow_wing') {
-            // 如果被带走的刚好是玩家手里正在操作自动下落的鸡，需要特殊标记重置
-            if (body === currentBody) {
-                activeChickenRemoved = true;
-                currentBody = null;
-            }
-            Composite.remove(world, body);
-        }
-    });
-    
-    // 如果玩家手里的鸡碰巧被带走了，立即补生成下一只，防止物理循环中断
-    if (activeChickenRemoved) {
-        setTimeout(spawnNext, 400);
-    }
-    
-    // 2.5 秒后自动关闭奇犽 GIF 遮罩层，恢复正常对局（可以根据 kirua.gif 的实际时长微调此处 2500 毫秒）
+    // 2. 预留 600 毫秒的蓄力定格展示（可以根据你的图片精美度微调这个毫秒数）
     setTimeout(() => {
-        overlay.style.display = 'none';
-        gif.src = '';
-    }, 2500);
+        
+        // 3. 第二阶段：图片即刻消失，转而开始播放大招动态图 assets/kirua.gif
+        gif.src = 'assets/kirua.gif?t=' + Date.now(); // 附带时间戳强制从第一帧播放GIF
+        
+        // 4. 伴随 GIF 的出现，爆发清除池子内所有的白羽鸡和黄羽鸡
+        const allBodies = Composite.allBodies(world);
+        let activeChickenRemoved = false;
+        
+        allBodies.forEach(body => {
+            if (body.label === 'wing' || body.label === 'yellow_wing') {
+                if (body === currentBody) {
+                    activeChickenRemoved = true;
+                    currentBody = null;
+                }
+                Composite.remove(world, body);
+            }
+        });
+        
+        // 如果手里正准备放下的鸡被顺便带走了，重置物理机制，400ms 后重新下落新素材
+        if (activeChickenRemoved) {
+            setTimeout(spawnNext, 400);
+        }
+        
+        // 5. 第三阶段：GIF 顺畅播放 2.5 秒后关闭全屏效果，恢复玩家正常对局
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            gif.src = '';
+        }, 2500);
+
+    }, 600); // 这里控制 godspeed.png 展示的时长（600毫秒）
 }
 
 // 7. 碰撞与合成逻辑
@@ -535,7 +540,7 @@ Events.on(engine, 'collisionStart', (event) => {
                 score += 100;
                 document.getElementById('score').innerText = score;
                 
-                // ✨ 新增：检测得分是否触发奇犽神威
+                // 检测得分是否触发奇犽神威
                 if (score % 700 === 0 && score > 0) {
                     triggerKamui();
                 }
@@ -551,7 +556,7 @@ Events.on(engine, 'collisionStart', (event) => {
                 score += 100;
                 document.getElementById('score').innerText = score;
                 
-                // ✨ 新增：检测得分是否触发奇犽神威
+                // 检测得分是否触发奇犽神威
                 if (score % 700 === 0 && score > 0) {
                     triggerKamui();
                 }
