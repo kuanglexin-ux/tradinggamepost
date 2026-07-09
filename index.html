@@ -332,7 +332,7 @@ const spawnablePool = [
 
 let currentBody = null;
 let targetX = width / 2; 
-const fallSpeed = 4.25;   
+const fallSpeed = 4.15;   
 
 // 4. 生成新素材
 function spawnNext() {
@@ -464,7 +464,7 @@ function triggerKamui() {
     gif.src = 'assets/godspeed.png';
     overlay.style.display = 'flex';
     
-    // 2. 预留 600 毫秒的蓄力定格展示（可以根据你的图片精美度微调这个毫秒数）
+    // 2. 预留 520 毫秒的蓄力定格展示（可以根据你的图片精美度微调这个毫秒数）
     setTimeout(() => {
         
         // 3. 第二阶段：图片即刻消失，转而开始播放大招动态图 assets/kirua.gif
@@ -495,7 +495,7 @@ function triggerKamui() {
             gif.src = '';
         }, 2500);
 
-    }, 600); // 这里控制 godspeed.png 展示的时长（600毫秒）
+    }, 520); // 这里控制 godspeed.png 展示的时长（520毫秒）
 }
 
 // 7. 碰撞与合成逻辑
