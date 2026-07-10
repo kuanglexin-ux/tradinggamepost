@@ -210,7 +210,7 @@
             <div class="intro-title"><img src="assets/wyef_logo.png" alt="WYEF Logo">集桶大富翁 · WYEF交易热身战</div>
             <div class="intro-content">
                 <p>亲爱的各位ABSer未来创业家，为了让大家提前感受资源整合交易游戏的氛围，ABS委员会推出了番外版小手游——<b>集桶大富翁 - WYEF交易热身战</b>。</p>
-                <p>各位将化身本地炸鸡连锁店店长，为了制作尽可能多的全家桶，需收集并整合各类掉落素材。大家知道，未加整合的单一素材，溢价空间有限，亦难以收获顾客关注——无论是单一的食材，还是调料，或是一个品牌。当被整合成为明星产品，获得市场关注后，产品在市场上的溢价空间才得以提升，扩大企业营收。作为合成产品的素材，也会因为收获更多市场关注而产生更高的市场价值。</p>
+                <p>各位将化身本地炸鸡连锁店店长，为了制作尽可能多的全家桶，需收集并整合各类掉落素材。大家知道，未加整合的单一素材，溢价空间有限，亦难以收获顾客关注——无论是单一的食材，还是调料，或是一个品牌。当被整合成为明星产品，获得 market 关注后，产品在市场上的溢价空间才得以提升，扩大企业营收。作为合成产品的素材，也会因为收获更多市场关注而产生更高的市场价值。</p>
                 <p>就像亨氏番茄酱当年因为麦当劳薯条的热卖而获得更多市场关注，麦当劳也因为门店的出圈套餐而收获更高的定价权。各位店长也请在游戏中尽可能地整合出更多的炸鸡全家桶，扩张自己的收益。每整合出一个全家桶，即可提升100元收益！</p>
                 
                 <div class="route-box">
@@ -253,6 +253,10 @@
 const bgm = new Audio('music/bgm.mp3');
 bgm.loop = true;       // 开启无限循环
 bgm.volume = 0.4;      // 默认适中音量
+
+// ✨ 新增：初始化奇犽大招蓄力语音流
+const godspeedAudio = new Audio('music/godspeed.mp3');
+godspeedAudio.volume = 0.85; // 适当调高一些，突出爆发感
 
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
@@ -332,7 +336,7 @@ const spawnablePool = [
 
 let currentBody = null;
 let targetX = width / 2; 
-const fallSpeed = 4.15;   
+const fallSpeed = 4.20;   
 
 // 4. 生成新素材
 function spawnNext() {
@@ -455,16 +459,22 @@ gameArea.addEventListener('mousemove', (e) => {
     }
 });
 
-// ✨ 修改后：奇犽“神威”分段式效果触发函数
+// 奇犽“神威”分段式效果触发函数
 function triggerKamui() {
     const overlay = document.getElementById('kamui-overlay');
     const gif = document.getElementById('kamui-gif');
     
+    // ✨ 新增：在展示 godspeed.png 的同时，重置进度并立刻同步播放大招语音
+    godspeedAudio.currentTime = 0;
+    godspeedAudio.play().catch(err => {
+        console.warn("大招语音播放被阻拦，请检查 music/godspeed.mp3 路径是否正确:", err);
+    });
+
     // 1. 第一阶段：拉起遮罩，先立即展示前摇蓄力图 assets/godspeed.png
     gif.src = 'assets/godspeed.png';
     overlay.style.display = 'flex';
     
-    // 2. 预留 520 毫秒的蓄力定格展示（可以根据你的图片精美度微调这个毫秒数）
+    // 2. 预留 520 毫秒的蓄力定格展示
     setTimeout(() => {
         
         // 3. 第二阶段：图片即刻消失，转而开始播放大招动态图 assets/kirua.gif
